@@ -1,0 +1,140 @@
+A) What % of sales result in a return?
+
+SELECT 
+    (return_sales / Total_sales) * 100 AS Percentage_of_return_sales
+FROM (
+    SELECT 
+        COUNT(DISTINCT r.OrderID) AS return_sales,
+        (SELECT COUNT(DISTINCT OrderID) FROM sales) AS Total_sales
+    FROM 
+        sales AS s
+    INNER JOIN 
+        returns AS r ON s.OrderID = r.OrderID
+) AS result;
+
+B) What % of returns are full returns?
+
+SELECT 
+    (full_returns / total_returns) * 100 AS percentage_of_total_returns
+FROM (
+    SELECT 
+        COUNT(r.OrderID) AS full_returns,
+        (SELECT COUNT(r.ReturnSales) FROM sales AS s 
+         INNER JOIN returns AS r ON s.OrderID = r.OrderID) AS total_returns
+    FROM 
+        sales AS s
+    INNER JOIN 
+        returns AS r ON s.OrderID = r.OrderID
+    WHERE 
+        s.Sales = r.ReturnSales
+) AS results;
+
+C) What is the average return % amount (return % of original sale)?
+
+SELECT 
+    (total_return_sales / total_sales_amount) * 100 AS average_percentage
+FROM (
+    SELECT 
+        SUM(s.Sales) AS total_sales_amount,
+        SUM(r.ReturnSales) AS total_return_sales
+    FROM 
+        sales AS s
+    INNER JOIN 
+        returns AS r ON s.OrderID = r.OrderID
+) AS result;
+
+D) What % of returns occur within 7 days of the original sale?
+
+SELECT 
+    (seven_days_count / total_returns) * 100 AS percentage
+FROM (
+    SELECT 
+        COUNT(seven_days) AS seven_days_count,
+        (
+            SELECT COUNT(DISTINCT r.OrderID)
+            FROM returns AS r
+            INNER JOIN sales AS s ON s.OrderID = r.OrderID
+        ) AS total_returns
+    FROM (
+        SELECT 
+            DATEDIFF(r.ReturnDate, s.TransactionDate) AS seven_days
+        FROM 
+            sales AS s
+        INNER JOIN 
+            returns AS r ON s.OrderID = r.OrderID
+    ) results
+    WHERE 
+        seven_days < 7
+) AS result;
+
+
+E) What is the average number of days for a return to occur?
+
+SELECT 
+    SUM(days) / total_returns AS average_days
+FROM (
+    SELECT 
+        s.TransactionDate,
+        r.ReturnDate,
+        DATEDIFF(r.ReturnDate, s.TransactionDate) AS days,
+        (SELECT COUNT(r.ReturnSales) FROM sales AS s 
+         INNER JOIN returns AS r ON s.OrderID = r.OrderID) AS total_returns
+    FROM 
+        sales AS s
+    INNER JOIN 
+        returns AS r ON s.OrderID = r.OrderID
+) result;
+
+F) Using this data set, how would you approach and answer the question, who is our most valuable customer?
+
+SELECT 
+    most_valuable_customer
+FROM (
+    SELECT 
+        customerid AS most_valuable_customer,
+        Order_counts,
+        Total_Sales_amount,
+        Total_return_sales_amount,
+        percentage
+    FROM (
+        SELECT 
+            customerid,
+            Order_counts,
+            Total_Sales_amount,
+            Total_return_sales_amount,
+            (Total_return_sales_amount / Total_Sales_amount) * 100 AS percentage
+        FROM (
+            SELECT 
+                s.CustomerID AS customerid, 
+                COUNT(DISTINCT s.OrderID) AS Order_counts,
+                SUM(s.Sales) AS Total_Sales_amount,
+                SUM(r.ReturnSales) AS Total_return_sales_amount
+            FROM 
+                sales AS s
+            RIGHT JOIN 
+                returns AS r ON r.CustomerID = s.CustomerID
+            GROUP BY 
+                customerid
+        ) result
+        ORDER BY 
+            Total_Sales_amount DESC, 
+            percentage ASC
+    ) results
+) qwert
+LIMIT 1;
+
+Process:
+
+Step-1:Extract all the unique customers in the sales table
+Step-2:Count the OrderID of each customer
+Step-3:Extract Sales and Return Sales based on those OrderID's
+Step-4:Sum the Sales and Return Sales by grouping the CustomerID
+Step-5:Identify Highest sales and least return
+
+Final:I assumed Most valuable customer is ,who have high sales and least return and high number of orders.
+
+Note: Presentation will be in sheet-1 in Excel
+
+Note: 
+1.I assume that OrderID are distict.So I removed duplicated,whenever OrderID is need.
+
