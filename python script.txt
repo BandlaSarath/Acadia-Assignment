@@ -1,0 +1,238 @@
+
+#Importing all necessary modules
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#Reading the Excel File
+data=pd.read_excel("/content/DS_Python_Assignment.xlsx")
+df=pd.DataFrame(data)
+
+#Knowing the columns and rows
+print(data.shape)
+
+#####################################################################################################################
+
+1.List down all the columns with missing values
+
+# Finding columns with missing values
+def missing_value(df):
+    missing_values = data.isnull().sum()
+    columns_with_missing_values = missing_values[missing_values > 0]
+    print(columns_with_missing_values)
+missing_value(df)
+
+####################################################################################################################
+
+2.Categorize the columns based upon their data type and print, for ex: print all the numeric variables and other data types as well
+
+#Getting the info about the dataset
+data.info()
+# Categorizing columns by data type
+def data_type(df):
+    data_types = {
+        'Float Columns': df.select_dtypes(include='float').columns.tolist(),
+        'String Columns': df.select_dtypes(include='object').columns.tolist(),
+        'int Columns': df.select_dtypes(include='int').columns.tolist()
+        }
+    for i in data_types:
+        print(f"{i}:",data_types[i])
+
+data_type(df)
+
+############################################################################################################################
+
+3.List the columns with duplicates a) Remove them b) Print before and after
+
+# Function to list columns with duplicate values
+def list_columns_with_duplicates(df):
+    columns_with_duplicates = []
+    for col in df.columns:
+        if df[col].duplicated().any():
+            columns_with_duplicates.append(col)
+    return columns_with_duplicates
+
+# Print columns with duplicates
+print("\nColumns with Duplicates:")
+columns_with_duplicates = list_columns_with_duplicates(df)
+print(columns_with_duplicates)
+
+# Print shape of the DataFrame before removing duplicates
+print("\nBefore removing the duplicates:")
+print("\n")
+print(df.columns)
+print("Shape of the DataFrame:", df.shape)
+
+# Remove duplicates permanently (in-place)
+df.drop_duplicates(inplace=True)
+
+# Print shape of the DataFrame after removing duplicates
+print("\nAfter removing duplicates:")
+print("\n")
+print(df.columns)
+print("Shape of the DataFrame:", df.shape)
+
+########################################################################################################################################
+
+4.List the constant columns a) Remove them b) Print before and after
+
+# Function to list constant columns
+def list_constant_columns(df):
+    constant_columns = []
+    for col in df.columns:
+        if df[col].nunique() == 1:  # If the column has only one unique value
+            constant_columns.append(col)
+    return constant_columns
+
+# List constant columns before removing them
+print("\nConstant Columns:")
+constant_columns = list_constant_columns(df)
+print(constant_columns)
+
+# Print shape of the DataFrame before removing constant columns
+print("\nBefore removing constant columns:")
+print("\n")
+print(df.columns)
+print("\n")
+print("Shape of the DataFrame:", df.shape)
+
+# Remove constant columns
+df.drop(columns=constant_columns, inplace=True)
+
+
+# Print shape of the DataFrame after removing constant columns
+print("\nAfter removing constant columns:")
+print(df.columns)
+print("\n")
+print("Shape of the DataFrame:", df.shape)
+
+#########################################################################################################################################################
+
+5.Create box plot to visualise the outliers of all the numeric columns
+
+Numeric_columns=df.select_dtypes(include='int').columns.tolist()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+# Create the box plot for the numeric columns
+
+# Create the figure and axes for subplots
+fig= plt.subplots(64,1,figsize=(100,80))
+
+# Loop through the numeric columns and plot the box plots
+for col in Numeric_columns:
+    sns.boxplot(data=df[col])  # Create boxplot for each column
+    plt.show()
+
+##############################################################################################################################################################
+
+6.Create charts for any 6 columns and show their distribution
+
+
+i.State Wise Count
+
+# Count occurrences of each state
+state_counts = df['STATE'].value_counts()
+
+# Plot the bar graph for state counts
+plt.figure(figsize=(20, 6))
+state_counts.plot(kind='bar', color='skyblue', edgecolor='black')
+
+# Add labels and title
+plt.title('State-wise Count', fontsize=16)
+plt.xlabel('State', fontsize=14)
+plt.ylabel('Count', fontsize=14)
+
+# Rotate x-axis labels for better readability
+plt.xticks(rotation=90)
+
+plt.show()
+
+ii.Age Distribution
+
+# Plot the histogram for the 'age' column
+plt.figure(figsize=(10, 6))
+plt.hist(df['AGE'], color='lightgreen', edgecolor='black', alpha=0.7)
+
+# Add labels and title
+plt.title('Age Distribution', fontsize=16)
+plt.xlabel('Age', fontsize=14)
+plt.ylabel('Frequency', fontsize=14)
+
+# Show the plot
+plt.show()
+
+iii.Income Distribution
+
+# Create a box plot for the 'income' column
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=df, y='INCOME', color='lightblue')
+
+# Add a title and labels
+plt.title('Income Distribution Box Plot', fontsize=16)
+plt.ylabel('Income', fontsize=14)
+
+# Show the plot
+plt.show()
+
+iv.Total Sales by State
+
+# Calculate total sales per state
+state_sales = df.groupby('STATE')['TOTALSALES'].sum().reset_index()
+
+# Rename columns for better readability
+state_sales.columns = ['State', 'Total Sales']
+
+# Plot the horizontal bar chart
+plt.figure(figsize=(10, 20))
+plt.barh(state_sales['State'], state_sales['Total Sales'], color='skyblue', edgecolor='black')
+
+# Add labels and title
+plt.title('Total Sales by State', fontsize=16)
+plt.xlabel('Total Sales', fontsize=14)
+plt.ylabel('State', fontsize=14)
+
+# Show the plot
+plt.show()
+
+v.Occupation Distribution
+
+# Select specific columns using iloc (e.g., columns 0 to 3)
+selected_columns = df.iloc[:, 9:21]
+
+# Count the occurrences of `1` in each selected column
+column_counts = selected_columns.sum()
+
+# Plot the pie chart
+plt.figure(figsize=(13, 13))
+plt.pie(
+    column_counts,
+    labels=column_counts.index,
+    autopct='%1.1f%%'
+
+)
+
+# Add a title
+plt.title('Occupation Distribution of buyers', fontsize=16)
+
+# Show the chart
+plt.show()
+
+vi.Average Close Distance to Store by State
+
+# Calculate average distance to store by state
+state_avg_distance = df.groupby('STATE')['CLOSESTSTOREDISTANCE'].mean().reset_index()
+
+# Plot the bar chart
+plt.figure(figsize=(20, 6))
+plt.bar(state_avg_distance['STATE'], state_avg_distance['CLOSESTSTOREDISTANCE'], color='yellow', edgecolor='black')
+
+# Add labels and title
+plt.title('Average Close Distance to Store by State', fontsize=16)
+plt.xlabel('State', fontsize=14)
+plt.ylabel('Average Distance to Store', fontsize=14)
+plt.xticks(rotation=45)
+
+# Show the plot
+plt.show()
+
